@@ -1,6 +1,7 @@
 ## Simple GCS Image Gallery
 
 This app provides:
+
 - one page with an image upload form
 - a gallery grid showing images already stored in Google Cloud Storage
 
