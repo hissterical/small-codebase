@@ -1,0 +1,86 @@
+import argparse
+import os
+import sys
+from urllib.error import URLError, HTTPError
+from urllib.request import urlopen
+
+from gcp_storage import GCSImageStore
+
+
+def run_fetch_test(limit: int, timeout: int, bucket: str | None, folder: str) -> int:
+    """Return process exit code after testing list + fetch access."""
+    try:
+        store = GCSImageStore(bucket_name=bucket, folder=folder)
+        urls = store.list_image_urls()
+    except ValueError as exc:
+        if "GCS_BUCKET_NAME" in str(exc):
+            print("FAILED: GCS bucket name is missing.")
+            print("Set GCS_BUCKET_NAME or run with --bucket <bucket-name>.")
+            return 1
+        print(f"FAILED: invalid configuration: {exc}")
+        return 1
+    except Exception as exc:  # pragma: no cover - diagnostic path
+        print(f"FAILED: could not list images from GCS: {exc}")
+        return 1
+
+    print(f"Found {len(urls)} image(s) in storage.")
+    if not urls:
+        print("No images available to fetch yet. Upload one image first.")
+        return 0
+
+    for index, url in enumerate(urls[:limit], start=1):
+        try:
+            with urlopen(url, timeout=timeout) as response:
+                status = getattr(response, "status", 200)
+                content_type = response.headers.get("Content-Type", "unknown")
+                sample = response.read(64)
+            print(
+                f"OK #{index}: status={status}, content_type={content_type}, bytes_read={len(sample)}"
+            )
+        except (HTTPError, URLError, TimeoutError) as exc:
+            print(f"FAILED #{index}: could not fetch image URL: {exc}")
+            return 1
+        except Exception as exc:  # pragma: no cover - diagnostic path
+            print(f"FAILED #{index}: unexpected error while fetching: {exc}")
+            return 1
+
+    print("PASS: image fetch test completed successfully.")
+    return 0
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Test fetch access for GCS image URLs.")
+    parser.add_argument(
+        "--bucket",
+        default=os.getenv("GCS_BUCKET_NAME"),
+        help="GCS bucket name (defaults to GCS_BUCKET_NAME env var)",
+    )
+    parser.add_argument(
+        "--folder",
+        default=os.getenv("GCS_FOLDER", "uploads"),
+        help="Folder/prefix inside the bucket",
+    )
+    parser.add_argument("--limit", type=int, default=1, help="How many image URLs to fetch")
+    parser.add_argument(
+        "--timeout", type=int, default=10, help="HTTP timeout in seconds per image"
+    )
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    if args.limit < 1:
+        print("--limit must be at least 1")
+        raise SystemExit(2)
+    if args.timeout < 1:
+        print("--timeout must be at least 1")
+        raise SystemExit(2)
+
+    raise SystemExit(
+        run_fetch_test(
+            limit=args.limit,
+            timeout=args.timeout,
+            bucket=args.bucket,
+            folder=args.folder,
+        )
+    )
