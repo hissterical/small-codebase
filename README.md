@@ -4,6 +4,7 @@ This app provides:
 
 - one page with an image upload form
 - a gallery grid showing images already stored in Google Cloud Storage
+- a simple notepad that stores notes in a SQL database
 
 ## Requirements
 
@@ -25,6 +26,7 @@ Set environment variables (PowerShell):
 ```powershell
 $env:GCS_BUCKET_NAME="your-bucket-name"
 $env:GCS_FOLDER="uploads"
+$env:DATABASE_URL="postgresql+psycopg://user:password@host:5432/database"
 ```
 
 If needed, also set your credentials path:

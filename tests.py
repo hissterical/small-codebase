@@ -1,10 +1,19 @@
 import argparse
 import os
+from pathlib import Path
 import sys
+import tempfile
+import unittest
 from urllib.error import URLError, HTTPError
 from urllib.request import urlopen
 
+# Make local imports deterministic even when executed from another directory.
+PROJECT_ROOT = Path(__file__).resolve().parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from gcp_storage import GCSImageStore
+from sql_notes import SQLNoteStore
 
 
 def run_fetch_test(limit: int, timeout: int, bucket: str | None, folder: str) -> int:
@@ -64,11 +73,46 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--timeout", type=int, default=10, help="HTTP timeout in seconds per image"
     )
+    parser.add_argument(
+        "--run-unit-tests",
+        action="store_true",
+        help="Run local unit tests for SQL notes",
+    )
     return parser.parse_args()
+
+
+class SQLNoteStoreTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        db_path = Path(self.temp_dir.name) / "notes.db"
+        self.store = SQLNoteStore(database_url=f"sqlite:///{db_path}")
+
+    def tearDown(self) -> None:
+        self.store.engine.dispose()
+        self.temp_dir.cleanup()
+
+    def test_add_and_list_note(self) -> None:
+        self.store.add_note("hello from test")
+
+        notes = self.store.list_notes()
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(notes[0]["content"], "hello from test")
+        self.assertIn("created_at", notes[0])
+
+    def test_ignores_blank_note(self) -> None:
+        self.store.add_note("   ")
+
+        notes = self.store.list_notes()
+        self.assertEqual(notes, [])
 
 
 if __name__ == "__main__":
     args = parse_args()
+    if args.run_unit_tests:
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(SQLNoteStoreTests)
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
+        raise SystemExit(0 if result.wasSuccessful() else 1)
+
     if args.limit < 1:
         print("--limit must be at least 1")
         raise SystemExit(2)
