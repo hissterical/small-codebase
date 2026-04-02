@@ -22,9 +22,9 @@ def run_fetch_test(limit: int, timeout: int, bucket: str | None, folder: str) ->
         store = GCSImageStore(bucket_name=bucket, folder=folder)
         urls = store.list_image_urls()
     except ValueError as exc:
-        if "GCS_BUCKET_NAME" in str(exc):
+        if "AWS_S3_BUCKET_NAME" in str(exc):
             print("FAILED: GCS bucket name is missing.")
-            print("Set GCS_BUCKET_NAME or run with --bucket <bucket-name>.")
+            print("Set AWS_S3_BUCKET_NAME or run with --bucket <bucket-name>.")
             return 1
         print(f"FAILED: invalid configuration: {exc}")
         return 1
@@ -61,8 +61,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Test fetch access for GCS image URLs.")
     parser.add_argument(
         "--bucket",
-        default=os.getenv("GCS_BUCKET_NAME"),
-        help="GCS bucket name (defaults to GCS_BUCKET_NAME env var)",
+        default=os.getenv("AWS_S3_BUCKET_NAME"),
+        help="GCS bucket name (defaults to AWS_S3_BUCKET_NAME env var)",
     )
     parser.add_argument(
         "--folder",
