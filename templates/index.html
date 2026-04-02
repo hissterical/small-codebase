@@ -94,44 +94,6 @@
         color: var(--muted);
         margin-top: 1rem;
       }
-
-      .notes-panel {
-        margin-top: 1rem;
-      }
-
-      textarea {
-        width: 100%;
-        min-height: 90px;
-        border-radius: 8px;
-        border: 1px solid #cfe0d5;
-        padding: 0.6rem;
-        font: inherit;
-        color: var(--text);
-      }
-
-      .notes-list {
-        margin-top: 1rem;
-        display: grid;
-        gap: 0.6rem;
-      }
-
-      .note-item {
-        border: 1px solid #e0ece4;
-        border-radius: 8px;
-        padding: 0.6rem;
-        background: #fafdfb;
-      }
-
-      .note-time {
-        color: var(--muted);
-        font-size: 0.85rem;
-        margin-bottom: 0.3rem;
-      }
-
-      .note-content {
-        margin: 0;
-        white-space: pre-wrap;
-      }
     </style>
   </head>
   <body>
@@ -155,32 +117,6 @@
         </div>
         {% else %}
         <p class="empty">No images uploaded yet.</p>
-        {% endif %}
-      </section>
-
-      <section class="panel notes-panel">
-        <h2>Notepad</h2>
-        <p>Write quick notes and keep them in your SQL database.</p>
-        <form action="/notes" method="post">
-          <textarea
-            name="note"
-            placeholder="Write a note..."
-            required
-          ></textarea>
-          <button type="submit">Save Note</button>
-        </form>
-
-        {% if notes %}
-        <div class="notes-list">
-          {% for note in notes %}
-          <article class="note-item">
-            <div class="note-time">{{ note.created_at }}</div>
-            <p class="note-content">{{ note.content }}</p>
-          </article>
-          {% endfor %}
-        </div>
-        {% else %}
-        <p class="empty">No notes yet.</p>
         {% endif %}
       </section>
     </main>
