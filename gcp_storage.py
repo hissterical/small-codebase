@@ -10,9 +10,9 @@ class GCSImageStore:
     """Small abstraction around Google Cloud Storage image operations."""
 
     def __init__(self, bucket_name: str | None = None, folder: str = "uploads") -> None:
-        self.bucket_name = bucket_name or os.getenv("AWS_S3_BUCKET_NAME")
+        self.bucket_name = bucket_name or os.getenv("GCS_BUCKET_NAME")
         if not self.bucket_name:
-            raise ValueError("AWS_S3_BUCKET_NAME is required")
+            raise ValueError("GCS_BUCKET_NAME is required")
 
         self.folder = folder.strip("/")
         self.client = storage.Client()

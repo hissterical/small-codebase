@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 
 def _get_store() -> GCSImageStore:
-    folder = os.getenv("FOLDER", "uploads")
+    folder = os.getenv("GCS_FOLDER", "uploads")
     return GCSImageStore(folder=folder)
 
 
